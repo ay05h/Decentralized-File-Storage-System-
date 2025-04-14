@@ -19,7 +19,8 @@ The system ensures:
 
 ## System Architecture
 
-![System Architecture]("C:\Users\ayush kumar\Documents\verbal\Decentralized-File-Storage-System-\frontend\public\architecture.png")
+![System Architecture](frontend/public/architecture.png)
+
 
 **Core Workflow:**
 
