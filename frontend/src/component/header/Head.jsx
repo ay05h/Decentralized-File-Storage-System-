@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import BlockchainService from "./../services/eth_Service";
-import EncryptedIPFSUploader from "./../IpfsUpload";
 import FileUpload from "../IpfsUpload";
 const Head = () => {
   const [isLoading, setIsLoading] = useState(true);

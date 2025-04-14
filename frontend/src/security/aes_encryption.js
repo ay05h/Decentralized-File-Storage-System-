@@ -62,7 +62,6 @@ const rCon = [
   [0x36, 0x00, 0x00, 0x00],
 ];
 
-// Key Expansion function
 function keyExpansion(key) {
   const w = new Array(Nb * (Nr + 1));
 
@@ -74,21 +73,16 @@ function keyExpansion(key) {
     let temp = w[i - 1].slice();
 
     if (i % Nk === 0) {
-      // RotWord
       temp = [temp[1], temp[2], temp[3], temp[0]];
-
-      // SubWord
       for (let j = 0; j < 4; j++) {
         temp[j] = sBox[temp[j]];
       }
 
-      // XOR with Rcon
       for (let j = 0; j < 4; j++) {
         temp[j] ^= rCon[i / Nk][j];
       }
     }
 
-    // XOR with word Nk positions earlier
     for (let j = 0; j < 4; j++) {
       w[i] = w[i] || [];
       w[i][j] = w[i - Nk][j] ^ temp[j];
@@ -98,7 +92,6 @@ function keyExpansion(key) {
   return w;
 }
 
-// SubBytes transformation
 function subBytes(state) {
   for (let r = 0; r < 4; r++) {
     for (let c = 0; c < Nb; c++) {
@@ -108,7 +101,6 @@ function subBytes(state) {
   return state;
 }
 
-// InvSubBytes transformation
 function invSubBytes(state) {
   for (let r = 0; r < 4; r++) {
     for (let c = 0; c < Nb; c++) {
@@ -118,28 +110,23 @@ function invSubBytes(state) {
   return state;
 }
 
-// ShiftRows transformation
 function shiftRows(state) {
   const temp = Array(4)
     .fill()
     .map(() => Array(4).fill(0));
 
-  // Row 0: No shift
   for (let c = 0; c < 4; c++) {
     temp[0][c] = state[0][c];
   }
 
-  // Row 1: Shift left by 1
   for (let c = 0; c < 4; c++) {
     temp[1][c] = state[1][(c + 1) % 4];
   }
 
-  // Row 2: Shift left by 2
   for (let c = 0; c < 4; c++) {
     temp[2][c] = state[2][(c + 2) % 4];
   }
 
-  // Row 3: Shift left by 3
   for (let c = 0; c < 4; c++) {
     temp[3][c] = state[3][(c + 3) % 4];
   }
@@ -147,28 +134,23 @@ function shiftRows(state) {
   return temp;
 }
 
-// InvShiftRows transformation
 function invShiftRows(state) {
   const temp = Array(4)
     .fill()
     .map(() => Array(4).fill(0));
 
-  // Row 0: No shift
   for (let c = 0; c < 4; c++) {
     temp[0][c] = state[0][c];
   }
 
-  // Row 1: Shift right by 1
   for (let c = 0; c < 4; c++) {
     temp[1][c] = state[1][(c + 3) % 4];
   }
 
-  // Row 2: Shift right by 2
   for (let c = 0; c < 4; c++) {
     temp[2][c] = state[2][(c + 2) % 4];
   }
 
-  // Row 3: Shift right by 3
   for (let c = 0; c < 4; c++) {
     temp[3][c] = state[3][(c + 1) % 4];
   }
@@ -176,7 +158,6 @@ function invShiftRows(state) {
   return temp;
 }
 
-// GF(2^8) multiplication function for MixColumns
 function gmul(a, b) {
   let p = 0;
   let hbs = 0;
@@ -188,14 +169,13 @@ function gmul(a, b) {
 
     hbs = a & 0x80;
     a <<= 1;
-    if (hbs) a ^= 0x1b; // 0x1b is the irreducible polynomial x^8 + x^4 + x^3 + x + 1
+    if (hbs) a ^= 0x1b;
     b >>= 1;
   }
 
   return p & 0xff;
 }
 
-// MixColumns transformation
 function mixColumns(state) {
   const temp = Array(4)
     .fill()
@@ -227,7 +207,6 @@ function mixColumns(state) {
   return temp;
 }
 
-// InvMixColumns transformation
 function invMixColumns(state) {
   const temp = Array(4)
     .fill()
@@ -259,7 +238,6 @@ function invMixColumns(state) {
   return temp;
 }
 
-// AddRoundKey transformation
 function addRoundKey(state, roundKey) {
   for (let r = 0; r < 4; r++) {
     for (let c = 0; c < Nb; c++) {
@@ -269,9 +247,7 @@ function addRoundKey(state, roundKey) {
   return state;
 }
 
-// Encryption of one block
 function encryptBlock(input, key) {
-  // Convert the 1D input array to the 2D state array (column-major order)
   let state = Array(4)
     .fill()
     .map(() => Array(Nb).fill(0));
@@ -281,14 +257,11 @@ function encryptBlock(input, key) {
     }
   }
 
-  // Generate the key schedule
   const w = keyExpansion(key);
 
-  // Initial round key addition
   let roundKey = w.slice(0, Nb);
   state = addRoundKey(state, roundKey);
 
-  // Main rounds
   for (let round = 1; round < Nr; round++) {
     state = subBytes(state);
     state = shiftRows(state);
@@ -297,13 +270,11 @@ function encryptBlock(input, key) {
     state = addRoundKey(state, roundKey);
   }
 
-  // Final round (no MixColumns)
   state = subBytes(state);
   state = shiftRows(state);
   roundKey = w.slice(Nr * Nb, (Nr + 1) * Nb);
   state = addRoundKey(state, roundKey);
 
-  // Convert the 2D state array back to 1D output array
   const output = new Uint8Array(16);
   for (let r = 0; r < 4; r++) {
     for (let c = 0; c < Nb; c++) {
@@ -314,9 +285,7 @@ function encryptBlock(input, key) {
   return output;
 }
 
-// Decryption of one block
 function decryptBlock(input, key) {
-  // Convert the 1D input array to the 2D state array (column-major order)
   let state = Array(4)
     .fill()
     .map(() => Array(Nb).fill(0));
@@ -326,14 +295,11 @@ function decryptBlock(input, key) {
     }
   }
 
-  // Generate the key schedule
   const w = keyExpansion(key);
 
-  // Initial round key addition (with last round key)
   let roundKey = w.slice(Nr * Nb, (Nr + 1) * Nb);
   state = addRoundKey(state, roundKey);
 
-  // Main rounds
   for (let round = Nr - 1; round > 0; round--) {
     state = invShiftRows(state);
     state = invSubBytes(state);
@@ -342,13 +308,11 @@ function decryptBlock(input, key) {
     state = invMixColumns(state);
   }
 
-  // Final round (no InvMixColumns)
   state = invShiftRows(state);
   state = invSubBytes(state);
   roundKey = w.slice(0, Nb);
   state = addRoundKey(state, roundKey);
 
-  // Convert the 2D state array back to 1D output array
   const output = new Uint8Array(16);
   for (let r = 0; r < 4; r++) {
     for (let c = 0; c < Nb; c++) {
@@ -359,7 +323,6 @@ function decryptBlock(input, key) {
   return output;
 }
 
-// Pad the input data according to PKCS#7
 function pad(data) {
   const paddingLength = 16 - (data.length % 16);
   const padded = new Uint8Array(data.length + paddingLength);
@@ -370,27 +333,21 @@ function pad(data) {
   return padded;
 }
 
-// Remove padding from the decrypted data
 function unpad(data) {
   const paddingLength = data[data.length - 1];
   return data.slice(0, data.length - paddingLength);
 }
 
-// Image encryption function
 async function encryptImage(imageFile, keyString) {
   return new Promise((resolve) => {
-    // Convert the key string to bytes
     const encoder = new TextEncoder();
     let keyBytes = encoder.encode(keyString);
 
-    // Ensure key is exactly 16 bytes (AES-128)
     if (keyBytes.length < 16) {
-      // Pad key if too short
       const paddedKey = new Uint8Array(16);
       paddedKey.set(keyBytes);
       keyBytes = paddedKey;
     } else if (keyBytes.length > 16) {
-      // Truncate key if too long
       keyBytes = keyBytes.slice(0, 16);
     }
 
@@ -399,10 +356,8 @@ async function encryptImage(imageFile, keyString) {
       const arrayBuffer = e.target.result;
       const imageData = new Uint8Array(arrayBuffer);
 
-      // Pad the image data
       const paddedData = pad(imageData);
 
-      // Encrypt each 16-byte block
       const encryptedData = new Uint8Array(paddedData.length);
       for (let i = 0; i < paddedData.length; i += 16) {
         const block = paddedData.slice(i, i + 16);
@@ -410,7 +365,6 @@ async function encryptImage(imageFile, keyString) {
         encryptedData.set(encryptedBlock, i);
       }
 
-      // Create a Blob from the encrypted data
       const encryptedBlob = new Blob([encryptedData], {
         type: "application/octet-stream",
       });
@@ -422,21 +376,15 @@ async function encryptImage(imageFile, keyString) {
   });
 }
 
-// Image decryption function
 async function decryptImage(encryptedFile, keyString) {
   return new Promise((resolve) => {
-    // Convert the key string to bytes
     const encoder = new TextEncoder();
     let keyBytes = encoder.encode(keyString);
-
-    // Ensure key is exactly 16 bytes (AES-128)
     if (keyBytes.length < 16) {
-      // Pad key if too short
       const paddedKey = new Uint8Array(16);
       paddedKey.set(keyBytes);
       keyBytes = paddedKey;
     } else if (keyBytes.length > 16) {
-      // Truncate key if too long
       keyBytes = keyBytes.slice(0, 16);
     }
 
@@ -445,7 +393,6 @@ async function decryptImage(encryptedFile, keyString) {
       const arrayBuffer = e.target.result;
       const encryptedData = new Uint8Array(arrayBuffer);
 
-      // Decrypt each 16-byte block
       const decryptedData = new Uint8Array(encryptedData.length);
       for (let i = 0; i < encryptedData.length; i += 16) {
         const block = encryptedData.slice(i, i + 16);
@@ -453,11 +400,9 @@ async function decryptImage(encryptedFile, keyString) {
         decryptedData.set(decryptedBlock, i);
       }
 
-      // Remove padding
       const unpaddedData = unpad(decryptedData);
 
-      // Create a Blob from the decrypted data
-      const decryptedBlob = new Blob([unpaddedData], { type: "image/png" }); // Assuming PNG for simplicity
+      const decryptedBlob = new Blob([unpaddedData], { type: "image/png" });
 
       resolve(decryptedBlob);
     };
@@ -466,5 +411,4 @@ async function decryptImage(encryptedFile, keyString) {
   });
 }
 
-// Export functions for potential reuse in other applications
 export { encryptImage, decryptImage };
