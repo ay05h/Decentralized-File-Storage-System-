@@ -4,6 +4,9 @@
 
 ---
 
+[Live Preview](https://decentralized-file-storage-system.vercel.app/)
+
+
 ## Abstract
 
 This project presents a **Decentralized File Storage System** that combines **IPFS** for distributed storage, **AES encryption** for file confidentiality, and **Ethereum Blockchain** for immutable metadata management. Users authenticate and interact with the blockchain via **MetaMask**, allowing them to upload, encrypt, and store files securely in a completely decentralized manner.
